@@ -44,10 +44,6 @@ PrintHelp()
 int
 main(int argc, char *argv[])
 {
-    #if DEBUG
-    printf("Debug Mode\n");
-    #endif
-
     memory_arena Arena = {};
     InitializeArena(&Arena, (size_t)Gigabytes(1));
 
@@ -65,9 +61,12 @@ main(int argc, char *argv[])
         }
         else if (day == 0)
         {
+            printf("Running All Days.\n");
             for (int32 i = 1; i < ArrayCount(DayList); ++i)
             {
+                printf("---- Day %d ----\n", i);
                 DayList[i](&Arena, false);
+                printf("\n");
             }
         }
         else

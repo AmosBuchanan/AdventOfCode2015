@@ -86,7 +86,7 @@ day1(memory_arena *Arena, bool32 Testing)
         printf("-1 - %d\n", countfloors(test4a, ArrayCount(test4a), &Info));
         printf("-1 - %d\n", countfloors(test4b, ArrayCount(test4b), &Info));
         printf("-3 - %d\n", countfloors(test5a, ArrayCount(test5a), &Info));
-        printf("-3 - %d\n", countfloors(test5b, ArrayCount(test5b), &Info));
+        printf("-3 - %d\n\n", countfloors(test5b, ArrayCount(test5b), &Info));
     }
 
     FILE *DAY1;

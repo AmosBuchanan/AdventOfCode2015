@@ -175,13 +175,13 @@ HasNonOverlappingPair(char *String, int32 Length)
         }
         else
         {
-            printf("2-letter Pair: %c%c   ", TestPair.Chars[0], TestPair.Chars[1]);
+            INFO("2-letter Pair: %c%c   ", TestPair.Chars[0], TestPair.Chars[1]);
         }
     }
     else
     {
         Result = 0;
-        printf("No Pair.  ");
+        INFO("No Pair.  ");
     }
     
 
@@ -207,11 +207,11 @@ HasMatchOneLetterOut(char *String)
 
     if(Result)
     {
-        printf("Valid Sequence: %c%c%c", *pos, *(pos+1), *(pos+2));
+        INFO("Valid Sequence: %c%c%c", *pos, *(pos+1), *(pos+2));
     }
     else
     {
-        printf("No Sequence Found.");
+        INFO("No Sequence Found.");
     }
 
     return(Result);
@@ -229,8 +229,6 @@ IsNice2(char *String)
     
 
     Result = Pair && Seq;
-
-    printf("\n");
 
     return(Result);
 }
@@ -257,7 +255,7 @@ CountNice(char *FileName, nicefunc NiceFunc, bool32 PrintResults)
             }
 
             if(PrintResults)
-                printf("%d -- %s\n", isNice, fileline);
+                INFO("%d -- %s\n", isNice, fileline);
             
         }
 
@@ -266,9 +264,8 @@ CountNice(char *FileName, nicefunc NiceFunc, bool32 PrintResults)
     }
     else
     {
-        printf("Unable to open file.\n");
+        ERROR("Unable to open file.\n");
     }
-
 
     return(NiceCount);
     
@@ -281,8 +278,10 @@ day5(memory_arena *Arena, bool32 Testing)
 
     char FileName[] = "files/day5.txt";
 
-    int32 Count = CountNice(FileName, IsNice2, 1);
+    int32 Count = CountNice(FileName, IsNice, Testing);
+    printf("Nice Count 2: %d\n", Count);
 
-    printf("Nice Count: %d\n", Count);
+    Count = CountNice(FileName, IsNice2, Testing);
+    printf("Nice Count 2: %d\n", Count);
     
 }

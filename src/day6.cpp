@@ -114,7 +114,6 @@ GetCoord(char **String)
 void
 ModifyLights(lightgrid *Grid, char* cmd)
 {
-
     char* pos = cmd;
     char cmdstring[10];
     operation Op = OP_NOP;
@@ -142,7 +141,7 @@ ModifyLights(lightgrid *Grid, char* cmd)
 
     if(Op == OP_NOP)
     {
-        printf("Didn't get an operation for %s! Aborting!\n", cmd);
+        ERROR("Didn't get an operation for %s! Aborting!\n", cmd);
     }
     else
     {
@@ -152,8 +151,8 @@ ModifyLights(lightgrid *Grid, char* cmd)
         EndLoc.X = GetCoord(&pos);
         EndLoc.Y = GetCoord(&pos);
         
-        printf("%s", cmd);
-        printf("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
+        INFO("%s", cmd);
+        INFO("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
 
         int ChangeCount = 0;
         for(int Y = StartLoc.Y; Y <= EndLoc.Y; Y++)
@@ -179,10 +178,10 @@ ModifyLights(lightgrid *Grid, char* cmd)
             }
         }
 
-        printf("Changed %d Bulbs.\n", ChangeCount);
+        INFO("Changed %d Bulbs.\n", ChangeCount);
     }
 
-    printf("\n");
+//    printf("\n");
 }
 
 /** Part 2
@@ -243,7 +242,7 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
 
     if(Op == OP_NOP)
     {
-        printf("Didn't get an operation for %s! Aborting!\n", cmd);
+        ERROR("Didn't get an operation for %s! Aborting!\n", cmd);
     }
     else
     {
@@ -253,8 +252,8 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
         EndLoc.X = GetCoord(&pos);
         EndLoc.Y = GetCoord(&pos);
         
-        printf("%s", cmd);
-        printf("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
+        INFO("%s", cmd); 
+        INFO("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
 
         int ChangeCount = 0;
         for(int Y = StartLoc.Y; Y <= EndLoc.Y; Y++)
@@ -281,25 +280,32 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
             }
         }
 
-        printf("Changed %d Bulbs.\n", ChangeCount);
+        INFO("Changed %d Bulbs.\n", ChangeCount);
     }
 
-    printf("\n");
+//    printf("\n");
 }
 
 void
 day6(memory_arena *Arena, bool32 Testing)
 {
+    lightgrid LightGridBoolean = {};
+    LightGridBoolean.Rows = 1000;
+    LightGridBoolean.Cols = 1000;
+    LightGridBoolean.Size = LightGridBoolean.Rows * LightGridBoolean.Cols * sizeof(int8);
 
-    lightgrid LightGrid = {};
-    LightGrid.Rows = 1000;
-    LightGrid.Cols = 1000;
-    LightGrid.Size = LightGrid.Rows * LightGrid.Cols * sizeof(int8);
+    LightGridBoolean.Grid = (uint8 *)PushSize(Arena, LightGridBoolean.Size);
+    InitializeGrid(&LightGridBoolean);
+    
+    lightgrid LightGridBrightness = {};
+    LightGridBrightness.Rows = 1000;
+    LightGridBrightness.Cols = 1000;
+    LightGridBrightness.Size = LightGridBrightness.Rows * LightGridBrightness.Cols * sizeof(int8);
 
-    LightGrid.Grid = (uint8 *)PushSize(Arena, LightGrid.Size);
-    InitializeGrid(&LightGrid);
+    LightGridBrightness.Grid = (uint8 *)PushSize(Arena, LightGridBrightness.Size);
+    InitializeGrid(&LightGridBrightness);
 
-    char FileName[] = "files/day6.txt";
+    char FileName[] = "files/day6_test1.txt";
     FILE *DAY6;
 
     DAY6 = fopen(FileName, "r");
@@ -308,7 +314,8 @@ day6(memory_arena *Arena, bool32 Testing)
         char fileline[100];
         while(fgets(fileline, 100, DAY6))
         {
-            ModifyBrightness(&LightGrid, fileline);
+            ModifyLights(&LightGridBoolean, fileline);
+            ModifyBrightness(&LightGridBrightness, fileline);
         }
 
         fclose(DAY6);
@@ -318,10 +325,10 @@ day6(memory_arena *Arena, bool32 Testing)
         printf("Unable to open file.\n");
     }
 
-    uint8 *pos = LightGrid.Grid;
+    uint8 *pos = LightGridBrightness.Grid;
     uint32 Lit = 0;
     uint64 Brightness = 0;
-    while(pos < (LightGrid.Grid+LightGrid.Size))
+    while(pos < (LightGridBrightness.Grid+LightGridBrightness.Size))
     {
         if(*pos)
         {
@@ -331,49 +338,23 @@ day6(memory_arena *Arena, bool32 Testing)
         pos++;
     }
 
-    printf("There are %d lights on.\n", Lit);
-    printf("Brightness is %llu.\n", Brightness);
-    
-}
-
-void
-day6_2(memory_arena *Arena)
-{
-
-    lightgrid LightGrid = {};
-    LightGrid.Rows = 1000;
-    LightGrid.Cols = 1000;
-    LightGrid.Size = LightGrid.Rows * LightGrid.Cols * sizeof(int8);
-
-    LightGrid.Grid = (uint8 *)PushSize(Arena, LightGrid.Size);
-    InitializeGrid(&LightGrid);
-
-    char FileName[] = "files/day6.txt";
-    filelines *FileLines = GetFile(Arena, FileName);
-
-    if(FileLines)
+    uint32 BooleanLit = 0;
     {
-        for(int i=0; i<FileLines->NumLines; i++)
+        uint8 *pos = LightGridBoolean.Grid;
+        BooleanLit = 0;
+        while(pos < (LightGridBoolean.Grid+LightGridBoolean.Size))
         {
-            ModifyBrightness(&LightGrid, FileLines->Lines[i]);
+            if(*pos)
+            {
+                BooleanLit++;
+            }
+            pos++;
         }
     }
+    printf("Light data (p1):\n");
+    printf("There are %d lights on.\n", BooleanLit);
 
-    uint8 *pos = LightGrid.Grid;
-    uint32 Lit = 0;
-    uint64 Brightness = 0;
-    while(pos < (LightGrid.Grid+LightGrid.Size))
-    {
-        if(*pos)
-        {
-            Lit++;
-            Brightness += *pos;
-        }
-        pos++;
-    }
-
+    printf("Light data (p2):\n");
     printf("There are %d lights on.\n", Lit);
     printf("Brightness is %llu.\n", Brightness);
-    
-
 }

@@ -1,4 +1,4 @@
-CFLAGS=-g -O0 -Wall -Isrc -Iinclude -Ilibsrc -DNDEBUG $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++11 -DDEBUG
+CFLAGS=-g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++11 -DNDEBUG
 LIBS=-Llib -Lbuild -ladvent $(OPTLIBS)
 PREFIX?=/usr/local
 CC=clang++

@@ -145,6 +145,16 @@ FollowSantaPath(memory_arena *Arena, world *World, char *movement)
     while(*movement)
     {
        MoveSanta(Arena, World, *(movement++));
+    }
+
+}
+
+void
+FollowBothSantaPath(memory_arena *Arena, world *World, char *movement)
+{
+    while(*movement)
+    {
+       MoveSanta(Arena, World, *(movement++));
        if(*movement)
            MoveRoboSanta(Arena, World, *(movement++));
     }
@@ -195,30 +205,37 @@ void
 day3(memory_arena *Arena, bool32 Testing)
 {
 
-    char test1[] = "^";
-    char test2[] = "^>v<";
-    char test3[] = "^v<>v^><";
-    char test4[] = "^v^v^v^v^v";
+    if(Testing)
+    {
+        world *World;
+        
+        printf("Tests:\n");
+        char test1[] = "^";
+        char test2[] = "^>v<";
+        char test3[] = "^v<>v^><";
+        char test4[] = "^v^v^v^v^v";
 
-    world *World = InitializeWorld(Arena);
-    FollowSantaPath(Arena, World, test1);
-    printf("%s\n", test1);
-    printf("Number of Houses: %d\n", World->HouseCount);
-    printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
+        World = InitializeWorld(Arena);
+        FollowSantaPath(Arena, World, test1);
+        printf("%s\n", test1);
+        printf("Number of Houses: %d\n", World->HouseCount);
+        printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
 
-    World = InitializeWorld(Arena);
-    FollowSantaPath(Arena, World, test2);
-    printf("%s\n", test2);
-    printf("Number of Houses: %d\n", World->HouseCount);
-    printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
+        World = InitializeWorld(Arena);
+        FollowSantaPath(Arena, World, test2);
+        printf("%s\n", test2);
+        printf("Number of Houses: %d\n", World->HouseCount);
+        printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
 
-    World = InitializeWorld(Arena);
-    FollowSantaPath(Arena, World, test4);
-    printf("%s\n", test4);
-    printf("Number of Houses: %d\n", World->HouseCount);
-    printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
-    
-    World = InitializeWorld(Arena);
+        World = InitializeWorld(Arena);
+        FollowSantaPath(Arena, World, test4);
+        printf("%s\n", test4);
+        printf("Number of Houses: %d\n", World->HouseCount);
+        printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
+    }
+
+    world *LoneWorld = InitializeWorld(Arena);
+    world *HelpedWorld = InitializeWorld(Arena);
     FILE *DAY3;
     DAY3 = fopen("files/day3.txt", "r");
     if(DAY3)
@@ -229,7 +246,7 @@ day3(memory_arena *Arena, bool32 Testing)
         int32 count =0;
         while(numread > 0)
         {
-            FollowSantaPath(Arena, World, Move);
+            FollowBothSantaPath(Arena, HelpedWorld, Move);
             count+=numread;
             numread = fread(Move, sizeof(char), 100, DAY3);
             Move[numread] = '\0';
@@ -237,10 +254,13 @@ day3(memory_arena *Arena, bool32 Testing)
                 printf("%s\n", Move);
         }
 
-        printf("Santa Stepcount: %d, RS Stepcount: %d\n", World->SantaStepCount, World->RoboSantaStepCount);
-        printf("Number of Houses (final): %d\n", World->HouseCount);
-        printf("Number of houses, straight count: %d\n", CountHouses(World));
-        printf("Total Moves: %d\n", count);
+        if(Testing)
+        {
+            printf("Santa Stepcount: %d, RS Stepcount: %d\n", HelpedWorld->SantaStepCount, HelpedWorld->RoboSantaStepCount);
+            printf("Number of houses, straight count: %d\n", CountHouses(HelpedWorld));
+            printf("Total Moves: %d\n", count);
+        }
+        printf("Number of Houses to recieve one present, with Santa and RoboSanta (final): %d\n", HelpedWorld->HouseCount);
         fclose(DAY3);
 
     }
@@ -249,6 +269,6 @@ day3(memory_arena *Arena, bool32 Testing)
         printf("Unable to open day 3 file.\n");
     }
 
-    printf("Wrong answer: 2343 (too high)\n");
+// printf("Wrong answer: 2343 (too high)\n");
 
 }

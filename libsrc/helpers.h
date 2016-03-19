@@ -42,8 +42,12 @@ typedef double real64;
 
 #if DEBUG
 #define Assert(Expression) if(!(Expression)) {*(int *)0 = 0;}
+#define INFO(string, ...) printf("INFO: %s:%d - " string "\n", __FILE__,__LINE__, ##__VA_ARGS__)
+#define ERROR(string, ...) fprintf(stderr, "ERROR: %s:%d - " string "\n", __FILE__,__LINE__, ##__VA_ARGS__)
 #else
 #define Assert(Expression)
+#define INFO(string, ...)
+#define ERROR(string, ...) fprintf(stderr, "ERROR: %s:%d - " string "\n", __FILE__,__LINE__, ##__VA_ARGS__)
 #endif
 
 struct memory_arena
