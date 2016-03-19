@@ -11,7 +11,7 @@
 #define DAY6_H
 
 void
-day6(memory_arena *Arena);
+day6(memory_arena *Arena, bool32 Testing);
 
 void
 day6_2(memory_arena *Arena);

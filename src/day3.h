@@ -10,5 +10,6 @@
 
 #define DAY3_H
 
-void day3();
+void day3(memory_arena *Arena, bool32 Testing);
+
 #endif

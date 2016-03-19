@@ -11,5 +11,5 @@
 #define DAY5_H
 
 void
-day5();
+day5(memory_arena *Arena, bool32 Testing);
 #endif

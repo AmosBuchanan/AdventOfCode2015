@@ -288,7 +288,7 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
 }
 
 void
-day6(memory_arena *Arena)
+day6(memory_arena *Arena, bool32 Testing)
 {
 
     lightgrid LightGrid = {};

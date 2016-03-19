@@ -12,7 +12,7 @@
 #include <string.h>
 
 void
-day4()
+day4(memory_arena *Arena, bool32 Testing)
 {
 
     unsigned char digest[16];

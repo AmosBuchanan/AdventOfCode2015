@@ -45,7 +45,7 @@ quicksort(int *list, int left, int right)
 }
 
 void
-day2()
+day2(memory_arena *Arena, bool32 Testing)
 {
     FILE *DAY2;
     char fileline[100];

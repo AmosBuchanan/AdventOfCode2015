@@ -7,8 +7,8 @@
    $Notice: (C) Copyright 2015 Amos Buchanan. All Rights Reserved. $
    ======================================================================== */
 
-#include <day3.h>
 #include <helpers.h>
+#include <day3.h>
 #include <stdio.h>
 
 struct house
@@ -192,7 +192,7 @@ CountHouses(world *World)
 
 
 void
-day3()
+day3(memory_arena *Arena, bool32 Testing)
 {
 
     char test1[] = "^";
@@ -200,28 +200,25 @@ day3()
     char test3[] = "^v<>v^><";
     char test4[] = "^v^v^v^v^v";
 
-    memory_arena Arena = {};
-    InitializeArena(&Arena, (size_t)Gigabytes(1));
-
-    world *World = InitializeWorld(&Arena);
-    FollowSantaPath(&Arena, World, test1);
+    world *World = InitializeWorld(Arena);
+    FollowSantaPath(Arena, World, test1);
     printf("%s\n", test1);
     printf("Number of Houses: %d\n", World->HouseCount);
     printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
 
-    World = InitializeWorld(&Arena);
-    FollowSantaPath(&Arena, World, test2);
+    World = InitializeWorld(Arena);
+    FollowSantaPath(Arena, World, test2);
     printf("%s\n", test2);
     printf("Number of Houses: %d\n", World->HouseCount);
     printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
 
-    World = InitializeWorld(&Arena);
-    FollowSantaPath(&Arena, World, test4);
+    World = InitializeWorld(Arena);
+    FollowSantaPath(Arena, World, test4);
     printf("%s\n", test4);
     printf("Number of Houses: %d\n", World->HouseCount);
     printf("Santa Location: (%d, %d); RS Loc: (%d, %d)\n", World->SantaLocation.X, World->SantaLocation.Y, World->RoboSantaLocation.X, World->RoboSantaLocation.Y);
     
-    World = InitializeWorld(&Arena);
+    World = InitializeWorld(Arena);
     FILE *DAY3;
     DAY3 = fopen("files/day3.txt", "r");
     if(DAY3)
@@ -232,7 +229,7 @@ day3()
         int32 count =0;
         while(numread > 0)
         {
-            FollowSantaPath(&Arena, World, Move);
+            FollowSantaPath(Arena, World, Move);
             count+=numread;
             numread = fread(Move, sizeof(char), 100, DAY3);
             Move[numread] = '\0';
@@ -254,6 +251,4 @@ day3()
 
     printf("Wrong answer: 2343 (too high)\n");
 
-    FreeArena(&Arena);
-        
 }

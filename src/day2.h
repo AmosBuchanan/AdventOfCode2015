@@ -8,7 +8,8 @@
    $Notice: (C) Copyright 2015 Amos Buchanan. All Rights Reserved. $
    ======================================================================== */
 
-#define DAY2_H
+#include <helpers.h>
 
-void day2();
+#define DAY2_H
+void day2(memory_arena *Arena, bool32 Testing);
 #endif

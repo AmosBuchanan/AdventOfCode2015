@@ -276,7 +276,7 @@ CountNice(char *FileName, nicefunc NiceFunc, bool32 PrintResults)
 
 
 void
-day5()
+day5(memory_arena *Arena, bool32 Testing)
 {
 
     char FileName[] = "files/day5.txt";
