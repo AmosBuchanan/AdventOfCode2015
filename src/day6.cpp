@@ -115,7 +115,7 @@ void
 ModifyLights(lightgrid *Grid, char* cmd)
 {
     char* pos = cmd;
-    char cmdstring[10];
+    char cmdstring[10] = {};
     operation Op = OP_NOP;
     v2 StartLoc = {0,0};
     v2 EndLoc = {0,0};
@@ -216,7 +216,7 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
 {
 
     char* pos = cmd;
-    char cmdstring[10];
+    char cmdstring[10] = {};
     operation Op = OP_NOP;
     v2 StartLoc = {0,0};
     v2 EndLoc = {0,0};
@@ -305,7 +305,7 @@ day6(memory_arena *Arena, bool32 Testing)
     LightGridBrightness.Grid = (uint8 *)PushSize(Arena, LightGridBrightness.Size);
     InitializeGrid(&LightGridBrightness);
 
-    char FileName[] = "files/day6_test1.txt";
+    char FileName[] = "files/day6.txt";
     FILE *DAY6;
 
     DAY6 = fopen(FileName, "r");
