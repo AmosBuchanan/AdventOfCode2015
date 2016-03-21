@@ -9,54 +9,61 @@
 
 #include <helpers.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 filelines *
 GetFile(memory_arena *Arena, char* FileName)
 {
-    filelines *FileLines = {};
+    filelines *FileLines = PushStruct(Arena, filelines);
 
-    FILE *DAY = fopen(FileName, "r");
-    char fileline[100];
-    if(DAY && !(fseek(DAY, 0L, SEEK_END)))
+    struct stat sb;
+    if(stat (FileName, &sb) != 0)
     {
-        long len = ftell(DAY);
-        char *EntireFile = (char*)PushSize(Arena, len);
-        fseek(DAY, 0L, SEEK_SET);
-
-        fread(EntireFile, sizeof(char), len, DAY);
-
-        int32 numlines = 0;
-        for(int i=0; i < len; ++i)
-        {
-            char Character = *(EntireFile + i);
-            if( Character == '\n')
-            {
-                *(EntireFile + i) = '\0';
-                numlines++;
-            }
-        }
-
-        char **LineArray = (char **) PushArray(Arena, numlines, size_t);
-
-        LineArray[0] = EntireFile;
-        for(int i=0; i<(len-1); ++i)
-        {
-            if(*(EntireFile+i) == '\0')
-            {
-                LineArray[1+i] = (EntireFile+i+1);
-                i++;
-            }
-        }
-
-        FileLines = (filelines *)PushStruct(Arena, filelines);
-        FileLines->Lines = LineArray;
-        FileLines->NumLines = numlines;
-        
-        fclose(DAY);
+        ERROR("Unable to STAT file: %s.", FileName);
     }
     else
     {
-        printf("Unable to open file: %s.\n", FileName);
+        int32 len = sb.st_size;
+
+
+        FILE *DAY = fopen(FileName, "r");
+        if(DAY)
+        {
+            FileLines->File = (char *)PushSize(Arena, len);
+            fread(FileLines->File, sizeof(char), (len), DAY);
+            FileLines->Lines[0] = FileLines->File;
+            
+            int32 numlines = 1;
+            for(int i=0; i < len; ++i)
+            {
+                char Character = *(FileLines->File + i);
+                if( Character == EOF)
+                {
+                    len = i;
+                    break;
+                }
+                if( Character == '\n')
+                {
+                    *(FileLines->File + i) = '\0';
+                    FileLines->Lines[numlines] = FileLines->File + i + 1;
+                    numlines++;
+                }
+            }
+
+            FileLines->File[len] = '\0';
+            FileLines->NumLines = --numlines;
+            FileLines->FileSize = len;
+
+            fclose(DAY);
+        }
+        else
+        {
+            ERROR("Unable to open file: %s.\n", FileName);
+            FileLines->File = 0;
+            FileLines->NumLines = 0;
+            FileLines->FileSize = -1;
+            
+        }
     }
 
 

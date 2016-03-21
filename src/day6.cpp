@@ -151,8 +151,8 @@ ModifyLights(lightgrid *Grid, char* cmd)
         EndLoc.X = GetCoord(&pos);
         EndLoc.Y = GetCoord(&pos);
         
-        INFO("%s", cmd);
-        INFO("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
+//        INFO("%s", cmd);
+//        INFO("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
 
         int ChangeCount = 0;
         for(int Y = StartLoc.Y; Y <= EndLoc.Y; Y++)
@@ -178,7 +178,7 @@ ModifyLights(lightgrid *Grid, char* cmd)
             }
         }
 
-        INFO("Changed %d Bulbs.\n", ChangeCount);
+//        INFO("Changed %d Bulbs.\n", ChangeCount);
     }
 
 //    printf("\n");
@@ -252,8 +252,8 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
         EndLoc.X = GetCoord(&pos);
         EndLoc.Y = GetCoord(&pos);
         
-        INFO("%s", cmd); 
-        INFO("Operation: %d, From (%d, %d), To (%d, %d)\n", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
+        // INFO("%s", cmd); 
+        // INFO("Operation: %d, From (%d, %d), To (%d, %d)", Op, StartLoc.X, StartLoc.Y, EndLoc.X, EndLoc.Y);
 
         int ChangeCount = 0;
         for(int Y = StartLoc.Y; Y <= EndLoc.Y; Y++)
@@ -280,7 +280,7 @@ ModifyBrightness(lightgrid *Grid, char* cmd)
             }
         }
 
-        INFO("Changed %d Bulbs.\n", ChangeCount);
+//        INFO("Changed %d Bulbs.\n", ChangeCount);
     }
 
 //    printf("\n");

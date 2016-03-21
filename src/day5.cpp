@@ -175,13 +175,13 @@ HasNonOverlappingPair(char *String, int32 Length)
         }
         else
         {
-            INFO("2-letter Pair: %c%c   ", TestPair.Chars[0], TestPair.Chars[1]);
+            // INFO("2-letter Pair: %c%c   ", TestPair.Chars[0], TestPair.Chars[1]);
         }
     }
     else
     {
         Result = 0;
-        INFO("No Pair.  ");
+        //INFO("No Pair.  ");
     }
     
 
@@ -207,11 +207,11 @@ HasMatchOneLetterOut(char *String)
 
     if(Result)
     {
-        INFO("Valid Sequence: %c%c%c", *pos, *(pos+1), *(pos+2));
+//        INFO("Valid Sequence: %c%c%c", *pos, *(pos+1), *(pos+2));
     }
     else
     {
-        INFO("No Sequence Found.");
+//        INFO("No Sequence Found.");
     }
 
     return(Result);

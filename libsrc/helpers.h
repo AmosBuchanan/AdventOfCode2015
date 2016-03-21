@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <malloc.h>
+#include <stdio.h>
     
 typedef int8_t int8;
 typedef int16_t int16;
@@ -42,7 +43,7 @@ typedef double real64;
 
 #if DEBUG
 #define Assert(Expression) if(!(Expression)) {*(int *)0 = 0;}
-#define INFO(string, ...) printf("INFO: %s:%d - " string "\n", __FILE__,__LINE__, ##__VA_ARGS__)
+#define INFO(string, ...) fprintf(stderr, "INFO: %s:%d - " string "\n", __FILE__,__LINE__, ##__VA_ARGS__)
 #define ERROR(string, ...) fprintf(stderr, "ERROR: %s:%d - " string "\n", __FILE__,__LINE__, ##__VA_ARGS__)
 #else
 #define Assert(Expression)
@@ -83,7 +84,6 @@ ResetArena(memory_arena *Arena)
     Arena->Used = 0;
 }
 
-
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type))
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (memory_index)(Count)*sizeof(type))
 #define PushSize(Arena, Size) PushSize_(Arena, Size)
@@ -105,8 +105,10 @@ struct v2
 
 struct filelines
 {
-    char **Lines;
+    char *File; 
+    char *Lines[10000]; // Assuming a file has a max of 10k lines; about 640k memory used.
 
+    int32 FileSize;
     int32 NumLines;
 };
 

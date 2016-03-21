@@ -72,13 +72,13 @@ day2(memory_arena *Arena, bool32 Testing)
             ribtotal += sides[0]*sides[1]*sides[2];
         
         }
-        printf("wrapping total: %d sqft\nribbon total: %d ft", wraptotal, ribtotal);
+        printf("wrapping total: %d sqft\nribbon total: %d ft\n", wraptotal, ribtotal);
 
         fclose(DAY2);
     }
     else
     {
-        printf("Unable to open file.\n");
+        printf("Unable to open day 2 file.\n");
     }
 
 }

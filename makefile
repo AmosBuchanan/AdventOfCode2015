@@ -1,5 +1,6 @@
-CFLAGS=-g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++11 -DNDEBUG
-LIBS=-Llib -Lbuild -ladvent $(OPTLIBS)
+CFLAGS=-g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++11 -DDEBUG
+LDLIBS=-Llib -Lbuild $(OPTLIBS)
+LDPATH=-Iinclude -Ibuild
 PREFIX?=/usr/local
 CC=clang++
 AR=llvm-ar
@@ -12,10 +13,12 @@ LIBSOURCES=$(wildcard libsrc/**/*.cpp libsrc/*.cpp)
 LIBOBJECTS=$(patsubst %.cpp,%.o,$(LIBSOURCES))
 
 TEST_SRC=$(wildcard tests/*_tests.cpp)
+TEST_OBJ=$(patsubst %.cpp,%.o,$(TEST_SRC))
 TESTS=$(patsubst %.cpp,%,$(TEST_SRC))
 
 TARGET=build/advent.exe
-SO_TARGET=build/libadvent.a
+SO_LIB=advent
+SO_TARGET=build/lib$(SO_LIB).a
 
 # The Target Build
 all: build $(TARGET)
@@ -23,9 +26,8 @@ all: build $(TARGET)
 dev: CFLAGS=-g -Wall -Isrc -Iinclude -Wall -Wextra $(OPTFLAGS)
 dev: all
 
-
 $(TARGET): build $(SO_TARGET) $(OBJECTS)
-	$(CC) $(OBJECTS) $(LIBS) -o $@
+	$(CC) $(OBJECTS) $(LDLIBS) -l$(SO_LIB) -o $@
 
 $(SO_TARGET): $(LIBOBJECTS)
 	$(AR) ru $@ $^
@@ -39,12 +41,14 @@ build:
 	@mkdir -p bin
 
 run: $(TARGET)
-	@build/test.exe
+	@build/advent.exe
 
 # The Unit Tests
 .PHONY: tests
-tests: CFLAGS += $(TARGET)
-tests: $(TESTS)
+tests: CFLAGS += $(SO_TARGET)
+tests: LDLIBS += -ladvent
+tests: $(SO_TARGET) $(TEST_OBJ) $(TESTS)
+	@echo Test Source: $(TEST_SRC)
 	sh ./tests/runtests.sh
 
 valgrind:
@@ -69,8 +73,4 @@ check:
 	@egrep $(BADFUNCS) $(SOURCES) || true
 
 
-# clang++ -g -O0 -Wall -Isrc -Iinclude -DNDEBUG  -Wno-unused-variable -Wno-null-dereference -std=c++11 -DDEBUG src/adventofcode.cpp -c -o src/adventofcode.o 
-# clang++ -g -O0 -Wall -Isrc -Iinclude -DNDEBUG  -Wno-unused-variable -Wno-null-dereference -std=c++11 -DDEBUG src/adventofcode.cpp -c -o src/adventofcode.o 
-
-# clang++ src/adventofcode.o src/day1.o src/day2.o src/day3.o src/day4.o src/day5.o src/day6.o src/helpers.o src/md5.o -Llib    -o build/test.exe
 

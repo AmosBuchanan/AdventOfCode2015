@@ -16,6 +16,7 @@
 #include <day4.h>
 #include <day5.h>
 #include <day6.h>
+#include <day7.h>
 
 typedef void (*DayFunctionPtr)(memory_arena *Arena, bool32 Testing);
 
@@ -26,7 +27,8 @@ DayFunctionPtr DayList[] = {
     day3,
     day4,
     day5,
-    day6
+    day6,
+    day7
 };
 
 
@@ -47,6 +49,8 @@ main(int argc, char *argv[])
     memory_arena Arena = {};
     InitializeArena(&Arena, (size_t)Gigabytes(1));
 
+    // freopen("err.log", "w", stderr);
+    
     if(argc == 1)
     {
         int32 day = ArrayCount(DayList)-1;
@@ -66,6 +70,7 @@ main(int argc, char *argv[])
             {
                 printf("---- Day %d ----\n", i);
                 DayList[i](&Arena, false);
+                ResetArena(&Arena);
                 printf("\n");
             }
         }

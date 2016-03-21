@@ -250,8 +250,6 @@ day3(memory_arena *Arena, bool32 Testing)
             count+=numread;
             numread = fread(Move, sizeof(char), 100, DAY3);
             Move[numread] = '\0';
-            if(count >7900)
-                printf("%s\n", Move);
         }
 
         if(Testing)
