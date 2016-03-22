@@ -13,17 +13,19 @@
 struct node
 {
     char Key[16];
-    int32 Value;
+    char *Value;
 
     node *Left;
     node *Right;
 };
 
-int32
-get_value(node *Node, char *Key);
+char *
+get_value(node *Node, char *Key, char *Value, int32 len);
 
 void
-insert_value(memory_arena *Arena, node **Node, char *Key, int32 Value);
+insert_value(memory_arena *Arena, node **Node, char *Key, char *Value, int32 len);
 
+void
+print_tree(node *Node);
 
 #endif

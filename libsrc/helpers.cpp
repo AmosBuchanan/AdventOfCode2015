@@ -71,3 +71,22 @@ GetFile(memory_arena *Arena, char* FileName)
 }
     
 
+char *
+SafeStrCpy(char *Dest, const char *Source, uint32 Len)
+{
+    char *Value = NULL;
+    int32 i = 0;
+    for(; i < (Len-1); i++)
+    {
+        *(Dest++) = *(Source++);
+    }
+
+    if(i == Len)
+    {
+        strcpy(&Dest[Len-1], "\0");
+    }
+
+    Value = Dest;
+
+    return (Value);
+}

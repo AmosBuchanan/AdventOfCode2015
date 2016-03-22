@@ -86,9 +86,11 @@ struct connection
     char Output[16];
     
     operation Op;
+
+    connection *Next;
 };
 
-operation
+operation 
 getOperation(char *OperationString)
 {
     operation Op = OP_NOP;
@@ -107,65 +109,211 @@ getOperation(char *OperationString)
     return Op;
 }
 
+int32
+doOperation(operation Op, uint16 Val1, uint16 Val2)
+{
+
+    int32 Value = 0;
+
+    switch(Op)
+    {
+        case OP_DEFINE:
+        {
+            Value = Val1;
+        }break;
+
+        case OP_AND:
+        {
+            Value = Val1 & Val2;
+        }break;
+
+        case OP_OR:
+        {
+            Value = Val1 | Val2;
+        }break;
+
+        case OP_LSHIFT:
+        {
+            Value = Val1 << Val2;
+        }break;
+
+        case OP_RSHIFT:
+        {
+            Value = Val1 >> Val2;
+        }break;
+
+        case OP_NOT:
+        {
+            Value = ~Val1;
+        }break;
+
+        default:
+        {
+        }break;
+    }
+
+    return (Value);
+        
+
+}
+
 connection
-getConnection(char *Line)
+getConnection(memory_arena *Arena, char *Line)
 {
     char *scratch, *txt;
     size_t len = strlen(Line);
 
     txt = strtok_r(Line, " ", &scratch);
-    uint32 Valnum = 0;
-    connection Con = {};
+    uint16 Valnum = 0;
+
+    connection NewCon = {};
 
     while(scratch)
     {
         operation ThisOp = getOperation(txt);
         if(ThisOp != OP_NOP)
         {
-            Con.Op = ThisOp;
+            NewCon.Op = ThisOp;
         }
-        else if((strcmp(txt, "->") == 0) && (Con.Op == OP_NOP))
+        else if((strcmp(txt, "->") == 0) && (NewCon.Op == OP_NOP))
         {
-            Con.Op = OP_DEFINE;
+            NewCon.Op = OP_DEFINE;
         }
         else if((strcmp(txt, "->") != 0))
         {
-            strcpy(Con.Values[Valnum++], txt);
+            strcpy(NewCon.Values[Valnum++], txt);
         }
         txt = strtok_r(NULL, " ", &scratch);
     }
 
-    strcpy(Con.Output, txt);
+    strcpy(NewCon.Output, txt);
 
-    INFO("OP: %d; %5s %5s, Output: %s", Con.Op, Con.Values[0], Con.Values[1], Con.Output);
+    // INFO("OP: %d; %5s %5s, Output: %s", Con.Op, Con.Values[0], Con.Values[1], Con.Output);
 
-    return (Con);
+    return (NewCon);
+
+}
+
+/**
+   Return 1 if variable inserted, 0 if variable caltulated.
+ **/
+bool32
+AddToTree(memory_arena *Arena, connection *Con, node **WireTree)
+{
+    bool32 Value = 0;
+    char Val1[10], Val2[10];
+    get_value(*WireTree, Con->Values[0], Val1, 10);
+    get_value(*WireTree, Con->Values[1], Val2, 10);
+    if((Con->Values[0][0] >= 0x30) && (Con->Values[0][0] <= 0x39) &&
+       (Con->Values[1][0] >= 0x30) && (Con->Values[1][0] <= 0x39))
+    {
+        char *stopstring;
+        uint16 uintVal1 = (uint16) strtol(Con->Values[0], &stopstring, 10);
+        uint16 uintVal2 = (uint16) strtol(Con->Values[1], &stopstring, 10);
+
+        uint16 FinalValue = doOperation(Con->Op, uintVal1, uintVal2);
+        char FinalValueString[10];
+        sprintf(FinalValueString, "%u", FinalValue);
+        insert_value(Arena, WireTree, Con->Output, FinalValueString, 10);
+    }
+    else
+    {
+        insert_value(Arena, WireTree, Con->Output, Con->Output, 10);
+        Value = 1;
+    }
+
+    return(Value);
+}
+
+void
+BuildTree(memory_arena *Arena, filelines *Day7, node **WireTree)
+{
+    connection *RootNode = 0;
+    connection *CurNode = 0;
+    for(int32 i = 0; i < Day7->NumLines; ++i)
+    {
+        connection NewCon = getConnection(Arena, Day7->Lines[i]);
+
+        bool32 ThisRoundAddedVariable = AddToTree(Arena, &NewCon, WireTree);
+        if(ThisRoundAddedVariable)
+        {
+            connection *NewNode = (connection *)PushStruct(Arena, connection);
+            NewNode->Op = NewCon.Op;
+            SafeStrCpy(NewNode->Values[0], NewCon.Values[0], 10);
+            SafeStrCpy(NewNode->Values[1], NewCon.Values[1], 10);
+            SafeStrCpy(NewNode->Output, NewCon.Output, 10);
+            
+            if(!CurNode)
+            {
+                CurNode = NewNode;
+            }
+            else
+            {
+                CurNode->Next = NewNode;
+                CurNode = CurNode->Next;
+            }
+        }
+    }
+
+    CurNode = RootNode;
+    connection *PrevNode = 0;
+    while(RootNode)
+    {
+        bool32 AddedVariable = AddToTree(Arena, CurNode, WireTree);
+        if(!AddedVariable)
+        {
+            if(PrevNode)
+            {
+                PrevNode->Next = CurNode->Next;
+                CurNode = CurNode->Next;
+            }
+            else
+            {
+                RootNode = CurNode->Next;
+                CurNode = RootNode;
+            }
+        }
+        else
+        {
+            CurNode = CurNode->Next;
+        }
+        if(CurNode == 0)
+        {
+            CurNode = RootNode;
+            PrevNode = 0;
+        }        
+    }
 
 }
 
 void
 day7(memory_arena *Arena, bool32 Testing)
 {
+
     if(Testing)
     {
-        node *WireTree = (node *)PushStruct(Arena, node);
-
         char TestFileName[] = "files/day7_test1.txt";
+
+        node *WireTree = NULL;
 
         filelines *Day7 = GetFile(Arena, TestFileName);
 
-        for(int32 i = 0; i < Day7->NumLines; ++i)
-        {
-            connection Con = getConnection(Day7->Lines[i]);
+        BuildTree(Arena, Day7, &WireTree);
 
-            char *stopstring;
-            int32 Val1 = strtol(Con.Values[0], &stopstring, 10);
-            if(!Val1)
-                Val1 = get_value(WireTree, Con.Values[0]);
-            
-        }
-
+        print_tree(WireTree);
     }
-    
-    
+
+    ResetArena(Arena);
+
+    {
+        char TestFileName[] = "files/day7.txt";
+        node *WireTree = NULL;
+        filelines *Day7 = GetFile(Arena, TestFileName);
+        BuildTree(Arena, Day7, &WireTree);
+
+        char PartA[] = "a";
+        char WireA[10];
+        get_value(WireTree, PartA, WireA, 10);
+        printf("Wire A: %s\n", WireA);        
+    }
 }

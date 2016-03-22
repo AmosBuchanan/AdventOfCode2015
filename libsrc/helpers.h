@@ -115,7 +115,8 @@ struct filelines
 filelines *
 GetFile(memory_arena *Arena, char* FileName);
 
-
+char *
+SafeStrCpy(char *Dest, const char *Source, uint32 Len);
 
 
 #endif

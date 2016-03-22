@@ -12,9 +12,9 @@
 #include <string.h>
 
 void
-insert_value(memory_arena *Arena, node **Node, char *Key, int32 Value)
+insert_value(memory_arena *Arena, node **Node, char *Key, char *Value, int32 len)
 {
-    if(*Node == 0)
+    if(!(*Node))
     {
         *Node = (node *)PushStruct(Arena, node);
         
@@ -25,41 +25,57 @@ insert_value(memory_arena *Arena, node **Node, char *Key, int32 Value)
     }
     else if(strcmp((*Node)->Key, Key) < 0)
     {
-        insert_value(Arena, &(*Node)->Left, Key, Value);
+        insert_value(Arena, &((*Node)->Left), Key, Value, len);
     }
     else if(strcmp((*Node)->Key, Key) > 0)
     {
-        insert_value(Arena, &(*Node)->Right, Key, Value);
+        insert_value(Arena, &((*Node)->Right), Key, Value, len);
     }
     else
     {
-        (*Node)->Value = Value;
+        SafeStrCpy((*Node)->Value, Value, len);
     }
 
     return;
 }
 
 
-int32
-get_value(node *Node, char *Key)
+char *
+get_value(node *Node, char *Key, char *Value, int32 len)
 {
-    int32 Value = -1;
     if(Node == 0)
     {
-        Value = -1;
+        Value = NULL;
     }
     else if(strcmp(Node->Key, Key) == 0)
     {
-        Value = Node->Value;
+        SafeStrCpy(Value, Node->Value, len);;
     }
     else if(strcmp(Node->Key, Key) < 0)
     {
-        Value = get_value(Node->Left, Key);
+        Value = get_value(Node->Left, Key, Value, len);
     }
     else if(strcmp(Node->Key, Key) > 0)
     {
-        Value = get_value(Node->Right, Key);   
+        Value = get_value(Node->Right, Key, Value, len);   
     }
 
     return Value;
+}
+
+void
+print_tree(node *Node)
+{
+    if(Node->Right)
+    {
+        print_tree(Node->Right);
+    }
+
+    printf("%s: %s\n", Node->Key, Node->Value);
+    
+    if(Node->Left)
+    {
+        print_tree(Node->Left);
+    }
+    
 }
