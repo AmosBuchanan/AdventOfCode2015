@@ -93,12 +93,6 @@ getOperation(char *OperationString)
     return Op;
 }
 
-struct operationresult
-{
-    uint16 Output;
-    bool32 isSuccess;
-};
-
 operationresult
 doOperation(operation Op, uint16 Val1, uint16 Val2)
 {
@@ -135,64 +129,6 @@ doOperation(operation Op, uint16 Val1, uint16 Val2)
         case OP_NOT:
         {
             OpResult.Output = ~Val1;
-        }break;
-
-        default:
-        {
-            OpResult.isSuccess = false;
-        }break;
-    }
-
-    return (OpResult);
-}
-
-operationresult
-doOperation(equation *Equation)
-{
-    operationresult OpResult = {};
-    OpResult.isSuccess = true;
-
-    uint16 Vals[MAX_OPERANDS];
-    operation Op = Equation->C->Op;
-    int32 NumOperands = Equation->C->NumOperands;
-
-    for (int i = 0; i < NumOperands; ++i)
-    {
-        char *stopstring;
-        Vals[i] = (uint16) strtol(Equation->C->Operands[i], &stopstring, 10);
-    }
-    
-    
-    switch(Op)
-    {
-        case OP_DEFINE:
-        {
-            OpResult.Output = Vals[0];
-        }break;
-
-        case OP_AND:
-        {
-            OpResult.Output = Vals[0] & Vals[1];
-        }break;
-
-        case OP_OR:
-        {
-            OpResult.Output = Vals[0] | Vals[1];
-        }break;
-
-        case OP_LSHIFT:
-        {
-            OpResult.Output = Vals[0] << Vals[1];
-        }break;
-
-        case OP_RSHIFT:
-        {
-            OpResult.Output = Vals[0] >> Vals[1];
-        }break;
-
-        case OP_NOT:
-        {
-            OpResult.Output = ~Vals[0];
         }break;
 
         default:
@@ -301,18 +237,24 @@ BuildEquationTree(memory_arena *Arena, filelines *Day7, equation **EquationTree)
         NewEquation->isOperated = false;
 
         bool32 isHaveAllValues = true;
+        uint16 Vals[MAX_OPERANDS] = {};
+        char *stopstring;
         for(int32 i = 0; i < NewEquation->C->NumOperands; ++i)
         {
             if(isVariable(NewEquation->C->Operands[i]))
             {
                 NewEquation->OperandEquations[i] = getEquation(EquationTree, NewEquation->C->Operands[i]);
                 isHaveAllValues = false;
-            }            
+            }
+            else
+            {
+                Vals[i] = (uint16) strtol(NewEquation->C->Operands[i], &stopstring, 10);
+            }
         }
 
         if(isHaveAllValues)
         {
-            operationresult Result = doOperation(NewEquation);
+            operationresult Result = doOperation(NewEquation->C->Op, Vals[0], Vals[1]);
             sprintf(NewEquation->OutputValue, "%d", Result.Output);
             NewEquation->isOperated = Result.isSuccess;
         }
@@ -331,6 +273,9 @@ CalculateTreeNode(equation *ENode, equation **EquationTree)
     }
     else
     {
+        char *Operands[MAX_OPERANDS];
+        uint16 Vals[MAX_OPERANDS];
+        char *stopstring;
         for(int i = 0; i < ENode->C->NumOperands; ++i)
         {
             if(isVariable(ENode->C->Operands[i]))
@@ -339,10 +284,17 @@ CalculateTreeNode(equation *ENode, equation **EquationTree)
                 {
                     ENode->OperandEquations[i] = getEquation(EquationTree, ENode->C->Operands[i]);
                 }
-                strcpy(ENode->C->Operands[i],CalculateTreeNode(ENode->OperandEquations[i], EquationTree));
+                Operands[i] = CalculateTreeNode(ENode->OperandEquations[i], EquationTree);
+                Vals[i] = (uint16) strtol(Operands[i], &stopstring, 10);
             }
+            else
+            {
+                Vals[i] = (uint16) strtol(ENode->C->Operands[i], &stopstring, 10);
+            }
+
         }
-        operationresult Result = doOperation(ENode);
+        
+        operationresult Result = doOperation(ENode->C->Op, Vals[0], Vals[1]);
         sprintf(ENode->OutputValue, "%d", Result.Output);
         ENode->isOperated = Result.isSuccess;
         Value = ENode->OutputValue;
@@ -402,6 +354,23 @@ printEquationTree(equation *ENode)
 }
 
 void
+ResetEquations(equation *ENode)
+{
+    if(ENode->Right)
+    {
+        ResetEquations(ENode->Right);
+    }
+
+    ENode->isOperated = false;
+
+    if(ENode->Left)
+    {
+        ResetEquations(ENode->Left);
+    }
+    
+}
+
+void
 day7(memory_arena *Arena, bool32 Testing)
 {
     if(Testing)
@@ -429,35 +398,22 @@ day7(memory_arena *Arena, bool32 Testing)
         equation *EquationTree = 0;
 
         BuildEquationTree(Arena, Day7, &EquationTree);
-        //printEquationTree(EquationTree);
 
-        //printf("\nCalculated Tree:\n");
         char WireALabel[5] = "a";
-        CalculateTree(EquationTree, &EquationTree);
-//        printEquationTree(EquationTree);
         equation *WireA = getEquation(&EquationTree, WireALabel);
-//        CalculateTreeNode(WireA, &EquationTree);
-        
+        CalculateTreeNode(WireA, &EquationTree);
 
         printf("Part 1: Wire A: %s\n", WireA->OutputValue);
-        char WireAOutput[VALUE_LEN];
-        strcpy(WireAOutput, WireA->OutputValue);
-
-        ResetArena(Arena);
-        Day7 = GetFile(Arena, TestFileName);
-        EquationTree = 0;
-        BuildEquationTree(Arena, Day7, &EquationTree);
+        ResetEquations(EquationTree);
 
         char WireBLabel[5] = "b";
         equation *WireB = getEquation(&EquationTree, WireBLabel);
-        strcpy(WireB->OutputValue, WireAOutput);
+        strcpy(WireB->OutputValue, WireA->OutputValue);
         WireB->isOperated = true;
 
-        CalculateTree(EquationTree, &EquationTree);
+        CalculateTreeNode(WireA, &EquationTree);
         WireA = getEquation(&EquationTree, WireALabel);
         printf("Part 2: Wire A: %s\n", WireA->OutputValue);
-
     }
-
 }
  
