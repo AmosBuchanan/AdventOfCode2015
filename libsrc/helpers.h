@@ -90,7 +90,12 @@ ResetArena(memory_arena *Arena)
 inline void *
 PushSize_(memory_arena *Arena, size_t Size)
 {
-    Assert((Arena->Used + Size) <= Arena->Size);
+
+    if((Arena->Used + Size) >= Arena->Size)
+    {
+        printf("Ran out of memory.");
+        Assert((Arena->Used + Size) <= Arena->Size);
+    }
     void *Result = Arena->Base + Arena->Used;
     Arena->Used += Size;
     

@@ -10,22 +10,24 @@
 
 #define BINARYTREE_H
 
+#include <helpers.h>
+
 struct node
 {
     char Key[16];
-    char *Value;
+    void *Value;
 
     node *Left;
     node *Right;
 };
 
-char *
-get_value(node *Node, char *Key, char *Value, int32 len);
+void *
+get_value(node **Node, char *Key);
 
 void
-insert_value(memory_arena *Arena, node **Node, char *Key, char *Value, int32 len);
+ insert_value(memory_arena *Arena, node **Node, char *Key, void *Value);
 
-void
-print_tree(node *Node);
+//void
+//print_tree(node *Node);
 
 #endif

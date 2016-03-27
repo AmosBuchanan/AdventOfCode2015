@@ -6,3 +6,7 @@ x AND y -> d
 x OR y -> e
 x LSHIFT 2 -> f
 y RSHIFT 2 -> g
+h AND ll -> ab
+i OR g -> ac
+ab AND ac -> kk
+d LSHIFT 2 -> ll

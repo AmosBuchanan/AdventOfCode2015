@@ -1,4 +1,4 @@
-/* ========================================================================
+ /* ========================================================================
    $File: $
    $Date: $
    $Revision: $
@@ -63,32 +63,16 @@ input), what signal is ultimately provided to wire a?
 
 */
 
-#include <day7.h>
+#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <binarytree.h>
+#include <helpers.h>
+#include <day7.h>
 
-enum operation
-{
-    OP_NOP,
-    OP_DEFINE,
-    OP_AND,
-    OP_OR,
-    OP_LSHIFT,
-    OP_RSHIFT,
-    OP_NOT
-};
-
-struct connection
-{
-    char Values[2][16];
-    char Output[16];
-    
-    operation Op;
-
-    connection *Next;
-};
+#define isVariable(operand) (((*operand >= 0x41) && (*operand <= 0x5A)) || ((*operand >= 0x61) && (*operand <= 0x7A)))
+void printEquation(equation *Equation);
 
 operation 
 getOperation(char *OperationString)
@@ -109,211 +93,371 @@ getOperation(char *OperationString)
     return Op;
 }
 
-int32
+struct operationresult
+{
+    uint16 Output;
+    bool32 isSuccess;
+};
+
+operationresult
 doOperation(operation Op, uint16 Val1, uint16 Val2)
 {
-
-    int32 Value = 0;
-
+    operationresult OpResult = {};
+    OpResult.isSuccess = true;
+    
     switch(Op)
     {
         case OP_DEFINE:
         {
-            Value = Val1;
+            OpResult.Output = Val1;
         }break;
 
         case OP_AND:
         {
-            Value = Val1 & Val2;
+            OpResult.Output = Val1 & Val2;
         }break;
 
         case OP_OR:
         {
-            Value = Val1 | Val2;
+            OpResult.Output = Val1 | Val2;
         }break;
 
         case OP_LSHIFT:
         {
-            Value = Val1 << Val2;
+            OpResult.Output = Val1 << Val2;
         }break;
 
         case OP_RSHIFT:
         {
-            Value = Val1 >> Val2;
+            OpResult.Output = Val1 >> Val2;
         }break;
 
         case OP_NOT:
         {
-            Value = ~Val1;
+            OpResult.Output = ~Val1;
         }break;
 
         default:
         {
+            OpResult.isSuccess = false;
         }break;
     }
 
-    return (Value);
-        
-
+    return (OpResult);
 }
 
-connection
+operationresult
+doOperation(equation *Equation)
+{
+    operationresult OpResult = {};
+    OpResult.isSuccess = true;
+
+    uint16 Vals[MAX_OPERANDS];
+    operation Op = Equation->C->Op;
+    int32 NumOperands = Equation->C->NumOperands;
+
+    for (int i = 0; i < NumOperands; ++i)
+    {
+        char *stopstring;
+        Vals[i] = (uint16) strtol(Equation->C->Operands[i], &stopstring, 10);
+    }
+    
+    
+    switch(Op)
+    {
+        case OP_DEFINE:
+        {
+            OpResult.Output = Vals[0];
+        }break;
+
+        case OP_AND:
+        {
+            OpResult.Output = Vals[0] & Vals[1];
+        }break;
+
+        case OP_OR:
+        {
+            OpResult.Output = Vals[0] | Vals[1];
+        }break;
+
+        case OP_LSHIFT:
+        {
+            OpResult.Output = Vals[0] << Vals[1];
+        }break;
+
+        case OP_RSHIFT:
+        {
+            OpResult.Output = Vals[0] >> Vals[1];
+        }break;
+
+        case OP_NOT:
+        {
+            OpResult.Output = ~Vals[0];
+        }break;
+
+        default:
+        {
+            OpResult.isSuccess = false;
+        }break;
+    }
+
+    return (OpResult);
+}
+
+connection *
 getConnection(memory_arena *Arena, char *Line)
 {
     char *scratch, *txt;
     size_t len = strlen(Line);
 
     txt = strtok_r(Line, " ", &scratch);
-    uint16 Valnum = 0;
 
-    connection NewCon = {};
+    connection *NewCon = PushStruct(Arena, connection);
+    NewCon->Op = OP_NOP;
+    NewCon->Operands[0][0] = '\0';
+    NewCon->NumOperands = 0;
 
     while(scratch)
     {
         operation ThisOp = getOperation(txt);
         if(ThisOp != OP_NOP)
         {
-            NewCon.Op = ThisOp;
+            NewCon->Op = ThisOp;
         }
-        else if((strcmp(txt, "->") == 0) && (NewCon.Op == OP_NOP))
+        else if((strcmp(txt, "->") == 0) && (NewCon->Op == OP_NOP))
         {
-            NewCon.Op = OP_DEFINE;
+            NewCon->Op = OP_DEFINE;
         }
         else if((strcmp(txt, "->") != 0))
         {
-            strcpy(NewCon.Values[Valnum++], txt);
+            strcpy(NewCon->Operands[NewCon->NumOperands++], txt);
         }
         txt = strtok_r(NULL, " ", &scratch);
     }
 
-    strcpy(NewCon.Output, txt);
+    strcpy(NewCon->Variable, txt);
 
-    // INFO("OP: %d; %5s %5s, Output: %s", Con.Op, Con.Values[0], Con.Values[1], Con.Output);
+    INFO("OP: %d; %5s %5s, Variable: %s", NewCon->Op, NewCon->Operands[0], NewCon->Operands[1], NewCon->Variable);
 
     return (NewCon);
-
 }
 
-/**
-   Return 1 if variable inserted, 0 if variable caltulated.
- **/
-bool32
-AddToTree(memory_arena *Arena, connection *Con, node **WireTree)
+void
+insertEquation(memory_arena *Arena, equation **ENode, equation *Equation)
 {
-    bool32 Value = 0;
-    char Val1[10], Val2[10];
-    get_value(*WireTree, Con->Values[0], Val1, 10);
-    get_value(*WireTree, Con->Values[1], Val2, 10);
-    if((Con->Values[0][0] >= 0x30) && (Con->Values[0][0] <= 0x39) &&
-       (Con->Values[1][0] >= 0x30) && (Con->Values[1][0] <= 0x39))
+    if(!(*ENode))
     {
-        char *stopstring;
-        uint16 uintVal1 = (uint16) strtol(Con->Values[0], &stopstring, 10);
-        uint16 uintVal2 = (uint16) strtol(Con->Values[1], &stopstring, 10);
-
-        uint16 FinalValue = doOperation(Con->Op, uintVal1, uintVal2);
-        char FinalValueString[10];
-        sprintf(FinalValueString, "%u", FinalValue);
-        insert_value(Arena, WireTree, Con->Output, FinalValueString, 10);
+        *ENode = Equation;
+        (*ENode)->Left = 0;
+        (*ENode)->Right = 0;
+    }
+    else if(strcmp((*ENode)->C->Variable, Equation->C->Variable) < 0)
+    {
+        insertEquation(Arena, &((*ENode)->Left), Equation);
+    }
+    else if(strcmp((*ENode)->C->Variable, Equation->C->Variable) > 0)
+    {
+        insertEquation(Arena, &((*ENode)->Right), Equation);
     }
     else
     {
-        insert_value(Arena, WireTree, Con->Output, Con->Output, 10);
-        Value = 1;
+        *ENode = Equation;
+    }
+}
+
+equation *
+getEquation(equation **ENode, char *Operand)
+{
+    equation *Value = NULL;
+    if(!(*ENode))
+    {
+        Value = NULL;
+    }
+    else if(strcmp((*ENode)->C->Variable, Operand) == 0)
+    {
+        Value = *ENode;
+    }
+    else if(strcmp((*ENode)->C->Variable, Operand) < 0)
+    {
+        Value = getEquation(&((*ENode)->Left), Operand);
+    }
+    else if(strcmp((*ENode)->C->Variable, Operand) > 0)
+    {
+        Value = getEquation(&((*ENode)->Right), Operand);
     }
 
     return(Value);
 }
 
 void
-BuildTree(memory_arena *Arena, filelines *Day7, node **WireTree)
+BuildEquationTree(memory_arena *Arena, filelines *Day7, equation **EquationTree)
 {
-    connection *RootNode = 0;
-    connection *CurNode = 0;
     for(int32 i = 0; i < Day7->NumLines; ++i)
     {
-        connection NewCon = getConnection(Arena, Day7->Lines[i]);
+        equation *NewEquation = PushStruct(Arena, equation);
 
-        bool32 ThisRoundAddedVariable = AddToTree(Arena, &NewCon, WireTree);
-        if(ThisRoundAddedVariable)
+        NewEquation->C = getConnection(Arena, Day7->Lines[i]);
+        NewEquation->OutputValue[0] = '\0';
+        NewEquation->isOperated = false;
+
+        bool32 isHaveAllValues = true;
+        for(int32 i = 0; i < NewEquation->C->NumOperands; ++i)
         {
-            connection *NewNode = (connection *)PushStruct(Arena, connection);
-            NewNode->Op = NewCon.Op;
-            SafeStrCpy(NewNode->Values[0], NewCon.Values[0], 10);
-            SafeStrCpy(NewNode->Values[1], NewCon.Values[1], 10);
-            SafeStrCpy(NewNode->Output, NewCon.Output, 10);
-            
-            if(!CurNode)
+            if(isVariable(NewEquation->C->Operands[i]))
             {
-                CurNode = NewNode;
-            }
-            else
-            {
-                CurNode->Next = NewNode;
-                CurNode = CurNode->Next;
-            }
+                NewEquation->OperandEquations[i] = getEquation(EquationTree, NewEquation->C->Operands[i]);
+                isHaveAllValues = false;
+            }            
         }
-    }
 
-    CurNode = RootNode;
-    connection *PrevNode = 0;
-    while(RootNode)
+        if(isHaveAllValues)
+        {
+            operationresult Result = doOperation(NewEquation);
+            sprintf(NewEquation->OutputValue, "%d", Result.Output);
+            NewEquation->isOperated = Result.isSuccess;
+        }
+
+        insertEquation(Arena, EquationTree, NewEquation);
+    }
+}
+
+char *
+CalculateTreeNode(equation *ENode, equation **EquationTree)
+{
+    char *Value = 0;
+    if(ENode->isOperated)
     {
-        bool32 AddedVariable = AddToTree(Arena, CurNode, WireTree);
-        if(!AddedVariable)
+        Value = ENode->OutputValue;
+    }
+    else
+    {
+        for(int i = 0; i < ENode->C->NumOperands; ++i)
         {
-            if(PrevNode)
+            if(isVariable(ENode->C->Operands[i]))
             {
-                PrevNode->Next = CurNode->Next;
-                CurNode = CurNode->Next;
-            }
-            else
-            {
-                RootNode = CurNode->Next;
-                CurNode = RootNode;
+                if(!ENode->OperandEquations[i])
+                {
+                    ENode->OperandEquations[i] = getEquation(EquationTree, ENode->C->Operands[i]);
+                }
+                strcpy(ENode->C->Operands[i],CalculateTreeNode(ENode->OperandEquations[i], EquationTree));
             }
         }
-        else
-        {
-            CurNode = CurNode->Next;
-        }
-        if(CurNode == 0)
-        {
-            CurNode = RootNode;
-            PrevNode = 0;
-        }        
+        operationresult Result = doOperation(ENode);
+        sprintf(ENode->OutputValue, "%d", Result.Output);
+        ENode->isOperated = Result.isSuccess;
+        Value = ENode->OutputValue;
     }
 
+    return(Value);
+}
+
+void
+CalculateTree(equation *ENode, equation **EquationTree)
+{
+    if(ENode->Right)
+    {
+        CalculateTree(ENode->Right, EquationTree);
+    }
+    CalculateTreeNode(ENode, EquationTree);
+    if(ENode->Left)
+    {
+        CalculateTree(ENode->Left, EquationTree);
+    }
+}
+
+void
+printEquation(equation *Equation)
+{
+    printf("%2s: %-5s -> [%d] ", Equation->C->Variable, Equation->OutputValue, Equation->C->Op);
+    int32 numOps = Equation->C->NumOperands;
+    for (int i = 0; i < numOps; ++i)
+    {
+        printf("%4s", Equation->C->Operands[i]);
+        if(i < (numOps-1))
+            printf(", ");
+    }
+    printf(" (");
+    (Equation->isOperated) ? printf("YES") : printf("NO");
+    printf(")");
+    
+
+    printf("\n");
+}
+
+void
+printEquationTree(equation *ENode)
+{
+    if(ENode->Right)
+    {
+        printEquationTree(ENode->Right);
+    }
+
+    printEquation(ENode);
+
+    if(ENode->Left)
+    {
+        printEquationTree(ENode->Left);
+    }
+    
 }
 
 void
 day7(memory_arena *Arena, bool32 Testing)
 {
-
     if(Testing)
     {
         char TestFileName[] = "files/day7_test1.txt";
-
-        node *WireTree = NULL;
-
         filelines *Day7 = GetFile(Arena, TestFileName);
 
-        BuildTree(Arena, Day7, &WireTree);
+        equation *EquationTree = 0;
 
-        print_tree(WireTree);
+        BuildEquationTree(Arena, Day7, &EquationTree);
+        printEquationTree(EquationTree);
+
+        printf("\nCalculated Tree:\n");
+        CalculateTree(EquationTree, &EquationTree);
+        printEquationTree(EquationTree);
+        printf("----\n");
     }
 
     ResetArena(Arena);
 
     {
         char TestFileName[] = "files/day7.txt";
-        node *WireTree = NULL;
         filelines *Day7 = GetFile(Arena, TestFileName);
-        BuildTree(Arena, Day7, &WireTree);
 
-        char PartA[] = "a";
-        char WireA[10];
-        get_value(WireTree, PartA, WireA, 10);
-        printf("Wire A: %s\n", WireA);        
+        equation *EquationTree = 0;
+
+        BuildEquationTree(Arena, Day7, &EquationTree);
+        //printEquationTree(EquationTree);
+
+        //printf("\nCalculated Tree:\n");
+        char WireALabel[5] = "a";
+        CalculateTree(EquationTree, &EquationTree);
+//        printEquationTree(EquationTree);
+        equation *WireA = getEquation(&EquationTree, WireALabel);
+//        CalculateTreeNode(WireA, &EquationTree);
+        
+
+        printf("Part 1: Wire A: %s\n", WireA->OutputValue);
+        char WireAOutput[VALUE_LEN];
+        strcpy(WireAOutput, WireA->OutputValue);
+
+        ResetArena(Arena);
+        Day7 = GetFile(Arena, TestFileName);
+        EquationTree = 0;
+        BuildEquationTree(Arena, Day7, &EquationTree);
+
+        char WireBLabel[5] = "b";
+        equation *WireB = getEquation(&EquationTree, WireBLabel);
+        strcpy(WireB->OutputValue, WireAOutput);
+        WireB->isOperated = true;
+
+        CalculateTree(EquationTree, &EquationTree);
+        WireA = getEquation(&EquationTree, WireALabel);
+        printf("Part 2: Wire A: %s\n", WireA->OutputValue);
+
     }
+
 }
+ 
