@@ -1,12 +1,13 @@
- /* ========================================================================
+/* ========================================================================
    $File: $
    $Date: $
    $Revision: $
    $Creator: Amos Buchanan $
-   $Email: amos.buchanan@traxxautomation.com $
-   $Notice: (C) Copyright 2015 Traxx Automation. All Rights Reserved. $
-   ========================================================================
+   $Email: amos@amosbuchanan.net $
+   $Notice: (C) Copyright 2015 Amos Buchanan. All Rights Reserved. $
+   ======================================================================== */
 
+/**   
 - Day 7: Some Assembly Required ---
 
 This year, Santa brought little Bobby Tables a set of wires and
