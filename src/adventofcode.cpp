@@ -17,6 +17,7 @@
 #include <day5.h>
 #include <day6.h>
 #include <day7.h>
+#include <day8.h>
 
 typedef void (*DayFunctionPtr)(memory_arena *Arena, bool32 Testing);
 
@@ -28,7 +29,8 @@ DayFunctionPtr DayList[] = {
     day4,
     day5,
     day6,
-    day7
+    day7,
+    day8
 };
 
 
