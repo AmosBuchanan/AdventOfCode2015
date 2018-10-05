@@ -1,4 +1,5 @@
 build
+bin
 lib
 **/*.o
 err.log

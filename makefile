@@ -1,30 +1,44 @@
-CFLAGS=-g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++11 -DDEBUG
-LDLIBS=-Llib -Lbuild $(OPTLIBS)
-LDPATH=-Iinclude -Ibuild
+BUILDDIR=build
+BINDIR=bin
+
+CFLAGS=-save-temps=obj -g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++17 -DDEBUG
+LDLIBS=-Llib -L$(BUILDDIR) -L$(BINDIR) $(OPTLIBS)
+LDPATH=-Iinclude -Ibuild -Lbin
 PREFIX?=/usr/local
 CC=clang++
 AR=llvm-ar
 RANLIB=llvm-ranlib
 
+
 SOURCES=$(wildcard src/**/*.cpp src/*.cpp)
-OBJECTS=$(patsubst %.cpp,%.o,$(SOURCES))
+OBJECTS=$(patsubst src/%.cpp,$(BUILDDIR)/%.o,$(SOURCES))
 
 LIBSOURCES=$(wildcard libsrc/**/*.cpp libsrc/*.cpp)
-LIBOBJECTS=$(patsubst %.cpp,%.o,$(LIBSOURCES))
+LIBOBJECTS=$(patsubst libsrc/%.cpp,$(BUILDDIR)/%.o,$(LIBSOURCES))
+
+SOURCES2=$(wildcard src2/**/*.cpp src2/*.cpp)
+S2OBJECTS=$(SOURCES2:src2/%.cpp=$(BUILDDIR)/%.o)
+EXECUTABLE_FILES= $(SOURCES2:src2/%.cpp=$(BINDIR)/%)
 
 TEST_SRC=$(wildcard tests/*_tests.cpp)
 TEST_OBJ=$(patsubst %.cpp,%.o,$(TEST_SRC))
 TESTS=$(patsubst %.cpp,%,$(TEST_SRC))
 
-TARGET=build/advent.exe
+TARGET=bin/advent.exe
 SO_LIB=advent
-SO_TARGET=build/lib$(SO_LIB).a
+SO_TARGET=bin/lib$(SO_LIB).a
 
 # The Target Build
-all: build $(TARGET)
+all: build $(TARGET) $(EXECUTABLE_FILES)
 
 dev: CFLAGS=-g -Wall -Isrc -Iinclude -Wall -Wextra $(OPTFLAGS)
 dev: all
+
+$(EXECUTABLE_FILES): bin/%: build/%.o
+	$(CC) $^ $(LDLIBS) -l$(SO_LIB) -o $@
+
+$(S2OBJECTS): $(BUILDDIR)/%.o: src2/%.cpp
+	$(CC) $(CFLAGS) $< -c -o $@
 
 $(TARGET): build $(SO_TARGET) $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDLIBS) -l$(SO_LIB) -o $@
@@ -33,8 +47,12 @@ $(SO_TARGET): $(LIBOBJECTS)
 	$(AR) ru $@ $^
 	$(RANLIB) $@
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) $< -c -o $@ 
+#%.o : %.cpp
+$(LIBOBJECTS): build/%.o: libsrc/%.cpp
+	$(CC) $(CFLAGS) $< -c -o $@
+
+$(OBJECTS): build/%.o: src/%.cpp
+	$(CC) $(CFLAGS) $< -c -o $@
 
 build:
 	@mkdir -p build
@@ -71,6 +89,3 @@ BADFUNCS='[^_.>a-zA-Z0-9](str(n?cpy|n?cat|xfrm|n?dup|str|pbrk|tok|_)|stpn?cpy|a?
 check:
 	@echo Files with potentially dangerous functions.
 	@egrep $(BADFUNCS) $(SOURCES) || true
-
-
-
