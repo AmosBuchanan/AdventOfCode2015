@@ -1,8 +1,8 @@
 BUILDDIR=build
 BINDIR=bin
 
-CFLAGS=-save-temps=obj -g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++17 -DDEBUG
-LDLIBS=-Llib -L$(BUILDDIR) -L$(BINDIR) $(OPTLIBS)
+CFLAGS=-save-temps=obj -g -O0 -Wall -Isrc -Iinclude -Ilibsrc $(OPTFLAGS) -Wno-unused-variable -Wno-null-dereference -std=c++17 -DDEBUG -pthread
+LDLIBS=-Llib -lpthread -L$(BUILDDIR) -L$(BINDIR) $(OPTLIBS)
 LDPATH=-Iinclude -Ibuild -Lbin
 PREFIX?=/usr/local
 CC=clang++
